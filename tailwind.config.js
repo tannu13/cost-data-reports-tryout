@@ -1,8 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: ["./src/**/*.{html,js,jsx,ts,tsx}"],
-	theme: {
-		extend: {},
-	},
-	plugins: [],
+  content: ["./src/**/*.{html,js,jsx,ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        "ig-base-primary": "#034EA2",
+      },
+    },
+  },
+  plugins: [],
 };

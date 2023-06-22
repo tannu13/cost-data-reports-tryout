@@ -1,11 +1,14 @@
 import "./App.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import CloudInstancesReport from "./CloudInstancesReport";
 
 function App() {
-	return (
-		<>
-			<h1 className="text-3xl font-bold underline">Hello world!</h1>
-		</>
-	);
+  const queryClient = new QueryClient();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <CloudInstancesReport />
+    </QueryClientProvider>
+  );
 }
 
 export default App;
