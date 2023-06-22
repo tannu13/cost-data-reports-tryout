@@ -27,7 +27,7 @@ export const getAllResources = () => {
   );
 };
 
-export const getCloudInstancesByResourcesName = (name: string) => {
+export const getCloudInstancesByResourceName = (name: string) => {
   return request<TCloudResource[]>(
     `https://engineering-task.elancoapps.com/api/resources/${encodeURIComponent(
       name

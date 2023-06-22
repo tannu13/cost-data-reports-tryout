@@ -48,11 +48,13 @@ export default function SelectField({
         setSelected(v ?? EMPTY_SELECT_ITEM);
         onChange(v);
       }}
-      nullable
+      by={(a: TSelectFieldItems, b: TSelectFieldItems) => {
+        return a?.id === b?.id;
+      }}
     >
       <div className="relative">
         <div className="relative w-full cursor-default overflow-hidden text-left">
-          <Combobox.Label>{label}</Combobox.Label>
+          <Combobox.Label className="text-xs">{label}</Combobox.Label>
           <div className="relative">
             <Combobox.Input
               className="w-full border py-2 pl-3 pr-10 h-[42px] focus:ring-0"

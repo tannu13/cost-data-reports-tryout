@@ -5,17 +5,17 @@ type TCloudCostResource = {
 };
 
 export type TCloudResource = {
-  consumedQuantity: string;
-  cost: string;
-  date: string;
-  instanceId: string;
-  meterCategory: string;
-  resourceGroup: string;
-  resourcelocation: string;
-  tags: TCloudCostResource;
-  unitOfMeasure: string;
-  location: string;
-  serviceName: string;
+  ConsumedQuantity: string;
+  Cost: number;
+  Date: string;
+  InstanceId: string;
+  MeterCategory: string;
+  ResourceGroup: string;
+  Resourcelocation: string;
+  Tags: TCloudCostResource;
+  UnitOfMeasure: string;
+  Location: string;
+  ServiceName: string;
 };
 
 export type TSelectFieldItems = {

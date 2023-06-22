@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import { getAllApplications, getAllResources } from "./api/data";
+import {
+  getAllApplications,
+  getAllCloudInstances,
+  getAllResources,
+  getCloudInstancesByResourceName,
+} from "./api/data";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import SelectField from "./components/SelectField";
 import useDataFetcher from "./hooks/useDataFetcher";
-import { TSelectFieldItems } from "./types";
+import { TCloudResource, TSelectFieldItems } from "./types";
+import { getCloudInstancesByApplicationName } from "./api/data";
 
 const EXTRA_FILTER_POSSIBLE_VALUES = {
   App: "App",
   Res: "Res",
 } as const;
+const PAGE_SIZES = [5, 10, 25, 50, 100];
 
 function CloudInstancesReport() {
   type TSelectFieldItemsWithRestrictedExtra = TSelectFieldItems & {
@@ -18,6 +25,8 @@ function CloudInstancesReport() {
   };
   const [selectedFilter, setSelectedFilter] =
     useState<TSelectFieldItemsWithRestrictedExtra | null>(null);
+
+  const [pageSize, setPageSize] = useState(5);
 
   const [applications, applicationsAreLoading] = useDataFetcher<string[]>({
     queryKey: "applications",
@@ -31,9 +40,52 @@ function CloudInstancesReport() {
     returnPaginated: false,
   });
 
+  // All page data
+  const [
+    allCloudInstances,
+    instancesAreLoading,
+    next,
+    prev,
+    goto,
+    refetchInstances,
+    paginationString,
+  ] = useDataFetcher<TCloudResource[]>({
+    queryKey: "all-cloud-instances",
+    queryFn: () => {
+      if (selectedFilter?.extra === EXTRA_FILTER_POSSIBLE_VALUES.App) {
+        return getCloudInstancesByApplicationName(selectedFilter.name);
+      } else if (selectedFilter?.extra === EXTRA_FILTER_POSSIBLE_VALUES.Res) {
+        return getCloudInstancesByResourceName(selectedFilter.name);
+      }
+      return getAllCloudInstances();
+    },
+    returnPaginated: true,
+    enabled: false,
+    pageSize,
+  });
+  useEffect(() => {
+    refetchInstances();
+  }, [selectedFilter]);
+
+  function handleFilterChange(
+    item: TSelectFieldItemsWithRestrictedExtra | null
+  ): void {
+    goto(0);
+    if (!item) {
+      setSelectedFilter(null);
+      return;
+    }
+
+    if (item.id) {
+      setSelectedFilter(item);
+    }
+  }
+
+  // merge applications and resources into one array of items
   const filterItems: TSelectFieldItemsWithRestrictedExtra[] = [];
   if (!applicationsAreLoading && !resourcesAreLoading) {
-    if (applications.length > 0) {
+    if (applications && applications.length > 0) {
+      // add a disabled Applications heading sorta to the list
       filterItems.push({
         id: "applications",
         name: "Applications",
@@ -47,7 +99,8 @@ function CloudInstancesReport() {
         }))
       );
     }
-    if (resources.length > 0) {
+    if (resources && resources.length > 0) {
+      // add a disabled Resources heading sorta to the list
       filterItems.push({
         id: "resources",
         name: "Resources",
@@ -60,20 +113,6 @@ function CloudInstancesReport() {
           extra: EXTRA_FILTER_POSSIBLE_VALUES.Res,
         }))
       );
-    }
-  }
-
-  function handleFilterChange(
-    item: TSelectFieldItemsWithRestrictedExtra | null
-  ): void {
-    if (!item) {
-      setSelectedFilter(null);
-      return;
-    }
-
-    const itemWithExtra = item as TSelectFieldItemsWithRestrictedExtra;
-    if (itemWithExtra.extra) {
-      setSelectedFilter(itemWithExtra);
     }
   }
 
@@ -105,22 +144,99 @@ function CloudInstancesReport() {
         </div>
 
         {/* Data */}
-        <table className="table-auto w-full">
+        <table className="border-collapse table-fixed w-full text-sm bg-white">
           <thead>
             <tr>
-              <th className="px-4 py-2">Column 1</th>
-              <th className="px-4 py-2">Column 2</th>
-              <th className="px-4 py-2">Column 3</th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12">
+                Service Name
+              </th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12">
+                Location
+              </th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12">
+                Resource Group
+              </th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12">
+                Date
+              </th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12">
+                Cost
+              </th>
+              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12">
+                Unit Of Measure
+              </th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td className="border px-4 py-2">Data 1</td>
-              <td className="border px-4 py-2">Data 2</td>
-              <td className="border px-4 py-2">Data 3</td>
-            </tr>
-          </tbody>
+          {instancesAreLoading ? (
+            <tbody>
+              <tr>
+                <td colSpan={6}>Loading...</td>
+              </tr>
+            </tbody>
+          ) : (
+            <tbody>
+              {allCloudInstances && allCloudInstances.length > 0 ? (
+                allCloudInstances.map((instance, i) => {
+                  return (
+                    <tr className="h-20" key={`${instance.InstanceId}_${i}`}>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        {instance.ServiceName}
+                      </td>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        {instance.Location}
+                      </td>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        {instance.ResourceGroup}
+                      </td>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        {instance.Date}
+                      </td>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        $ {Math.round(instance.Cost * 100) / 100}
+                      </td>
+                      <td className="border-b border-slate-100 p-4 text-slate-500">
+                        {instance.UnitOfMeasure}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6}>No data found</td>
+                </tr>
+              )}
+            </tbody>
+          )}
         </table>
+        <div className="flex bg-white p-6 justify-between">
+          <div className="basis-1/6">
+            <SelectField
+              label="Page Size"
+              placeholder="Select..."
+              items={PAGE_SIZES.map((size) => ({
+                id: size.toString(),
+                name: size.toString(),
+              }))}
+              value={{ id: pageSize.toString(), name: pageSize.toString() }}
+              onChange={(item) => setPageSize(Number(item?.id))}
+            />
+          </div>
+          <div className="basis-2/6 flex gap-2 items-center justify-end">
+            <div className="basis-3/12 ">{paginationString}</div>
+            <button
+              className="basis-4/12 border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
+              onClick={next}
+            >
+              Next
+            </button>
+            <button
+              className="basis-4/12 border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
+              onClick={prev}
+            >
+              Prev
+            </button>
+          </div>
+        </div>
       </main>
 
       <Footer />
