@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-export default function useDataFetcher<TResponse>({
+export default function useDataFetcher<TResponse, TResponseItem = object>({
   queryKey,
   queryFn,
   returnPaginated = false,
@@ -14,7 +14,7 @@ export default function useDataFetcher<TResponse>({
   returnPaginated: boolean;
   enabled?: boolean;
   pageSize?: number;
-  sortFunc?: (a: TResponse, b: TResponse) => number;
+  sortFunc?: (a: TResponseItem, b: TResponseItem) => number;
 }): [
   TResponse | null,
   boolean,

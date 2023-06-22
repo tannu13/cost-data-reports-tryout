@@ -12,6 +12,13 @@ import SelectField from "./components/SelectField";
 import useDataFetcher from "./hooks/useDataFetcher";
 import { TCloudResource, TSelectFieldItems } from "./types";
 import { getCloudInstancesByApplicationName } from "./api/data";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/20/solid";
 
 const EXTRA_FILTER_POSSIBLE_VALUES = {
   App: "App",
@@ -27,6 +34,8 @@ function CloudInstancesReport() {
     useState<TSelectFieldItemsWithRestrictedExtra | null>(null);
 
   const [pageSize, setPageSize] = useState(5);
+  const [sortBy, setSortBy] = useState<keyof TCloudResource>();
+  const [direction, setDirection] = useState<"asc" | "desc">("asc");
 
   const [applications, applicationsAreLoading] = useDataFetcher<string[]>({
     queryKey: "applications",
@@ -49,7 +58,7 @@ function CloudInstancesReport() {
     goto,
     refetchInstances,
     paginationString,
-  ] = useDataFetcher<TCloudResource[]>({
+  ] = useDataFetcher<TCloudResource[], TCloudResource>({
     queryKey: "all-cloud-instances",
     queryFn: () => {
       if (selectedFilter?.extra === EXTRA_FILTER_POSSIBLE_VALUES.App) {
@@ -62,15 +71,40 @@ function CloudInstancesReport() {
     returnPaginated: true,
     enabled: false,
     pageSize,
+    sortFunc: (a, b) => {
+      if (sortBy) {
+        if (direction === "asc") {
+          if (typeof a[sortBy] === "string" && typeof b[sortBy] === "string") {
+            return (a[sortBy] as string).localeCompare(b[sortBy] as string);
+          }
+          if (typeof a[sortBy] === "number" && typeof b[sortBy] === "number") {
+            return (a[sortBy] as number) - (b[sortBy] as number);
+          }
+          return a[sortBy] > b[sortBy] ? 1 : -1;
+        } else {
+          // desc
+          if (typeof a[sortBy] === "string" && typeof b[sortBy] === "string") {
+            return (b[sortBy] as string).localeCompare(a[sortBy] as string);
+          }
+          if (typeof a[sortBy] === "number" && typeof b[sortBy] === "number") {
+            return (b[sortBy] as number) - (a[sortBy] as number);
+          }
+          return a[sortBy] < b[sortBy] ? 1 : -1;
+        }
+      }
+      return 0;
+    },
   });
   useEffect(() => {
     refetchInstances();
-  }, [selectedFilter]);
+  }, [selectedFilter, refetchInstances]);
 
   function handleFilterChange(
     item: TSelectFieldItemsWithRestrictedExtra | null
   ): void {
     goto(0);
+    setSortBy(undefined);
+    setDirection("asc");
     if (!item) {
       setSelectedFilter(null);
       return;
@@ -147,23 +181,203 @@ function CloudInstancesReport() {
         <table className="border-collapse table-fixed w-full text-sm bg-white">
           <thead>
             <tr>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12">
-                Service Name
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "ServiceName") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("ServiceName");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Service Name</div>
+                  {sortBy === "ServiceName" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12">
-                Location
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "Location") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("Location");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Location</div>
+                  {sortBy === "Location" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12">
-                Resource Group
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-3/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "ResourceGroup") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("ResourceGroup");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Resource Group</div>
+                  {sortBy === "ResourceGroup" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12">
-                Date
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "Date") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("Date");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Date</div>
+                  {sortBy === "Date" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12">
-                Cost
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-1/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "Cost") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("Cost");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Cost</div>
+                  {sortBy === "Cost" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
-              <th className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12">
-                Unit Of Measure
+              <th
+                className="border-b font-medium p-6 pl-4 pb-3 text-slate-800 text-left w-2/12 cursor-pointer"
+                onClick={() => {
+                  if (sortBy === "UnitOfMeasure") {
+                    setDirection(direction === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortBy("UnitOfMeasure");
+                    setDirection("asc");
+                  }
+                }}
+              >
+                <div className="flex gap-2">
+                  <div className="">Unit Of Measure</div>
+                  {sortBy === "UnitOfMeasure" ? (
+                    direction === "asc" ? (
+                      <ChevronDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <ChevronUpIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )
+                  ) : (
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </th>
             </tr>
           </thead>
@@ -224,16 +438,18 @@ function CloudInstancesReport() {
           <div className="basis-2/6 flex gap-2 items-center justify-end">
             <div className="basis-3/12 ">{paginationString}</div>
             <button
-              className="basis-4/12 border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
+              className="basis-4/12 flex items-center justify-center border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
+              onClick={prev}
+            >
+              <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+              Prev
+            </button>
+            <button
+              className="basis-4/12 flex items-center justify-center border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
               onClick={next}
             >
               Next
-            </button>
-            <button
-              className="basis-4/12 border bg-ig-base-primary text-white hover:bg-ig-base-primary/75 active:ring active:ring-ig-base-primary rounded w-full h-[42px]"
-              onClick={prev}
-            >
-              Prev
+              <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
